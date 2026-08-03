@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Compiled Backend Production Output
+dist/
+build/
+
+# TypeScript Runtime Compiled Artifacts
+tsconfig.tsbuildinfo
+*.js
+*.js.map
+*.d.ts
+
+# Security / Database Credentials / API Keys
+.env
+.env.local
+.env.production
+
+# Logs & Diagnostics
+logs/
+*.log
+npm-debug.log*
+
+# Windows OS Junk
+Thumbs.db
+[Dd]esktop.ini
+
+# Editor Specific (VS Code)
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+.history/

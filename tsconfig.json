@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    // 1. File Layout (Uncommented and activated for our structure)
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    // 2. Environment Settings
+    // Switched to CommonJS/ES2022 for seamless Express compatibility 
+    // without needing complex .js extension imports
+    "module": "CommonJS",
+    "target": "ES2022",
+    "lib": ["es2022"],
+    "types": ["node", "jest"],
+
+    // 3. Other Outputs
+    "sourceMap": true,
+
+    // 4. Stricter Typechecking Options (Kept from your config)
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "strict": true,
+
+    // 5. Recommended Options
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  // 6. Tell TypeScript exactly what to include and exclude
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
