@@ -16,7 +16,7 @@
         if (error instanceof ZodError) {
         // Send back a clean, structured array of validation errors
         res.status(400).json({
-            status: 'fail',
+            success: false,
             errors: error.issues.map((err) => ({
             field: err.path.join('.'),
             message: err.message,
@@ -26,7 +26,7 @@
         }
         
         // Handle unexpected non-Zod errors
-        res.status(500).json({ status: 'error', message: 'Internal Server Error during validation' });
+        res.status(500).json({ success: false, message: 'Internal Server Error during validation' });
         return;
     }
     };

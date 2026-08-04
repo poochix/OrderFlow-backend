@@ -31,6 +31,8 @@ afterAll(async () => {
     await mongoServer.stop()
 });
 
+
+// =========REGISTER====== 
 describe('POST /api/auth/register', () => {
     it('should successfully reigter a new user when valid data is provided', async () => {
         const res = await request(app)
@@ -43,7 +45,7 @@ describe('POST /api/auth/register', () => {
             });
 
         expect(res.status).toBe(201);
-        expect(res.body.status).toBe('success');
+        expect(res.body.success).toBe(true);
         console.log("========",res.body)
         expect(res.body.data.email).toBe('testuser@gmail.com');
         expect(res.body.data).not.toHaveProperty('password'); // security check: ensures that password is not leaked
@@ -60,8 +62,60 @@ describe('POST /api/auth/register', () => {
                
         });
 
+        console.log('INVALID REGISTER BODY', res.body);
         expect(res.status).toBe(400);
-        expect(res.body.status).toBe('fail');
+        expect(res.body.success).toBe(false);
         expect(res.body.errors).toBeDefined();
+    });
+});
+
+//=======LOGIN=========
+describe('POST /api/auth/login', ()=>{
+
+    //must have a registered user before running the tests
+    beforeEach(async () =>{
+        await request(app)
+        .post('/api/auth/register')
+        .send({
+            name: "USER1",
+            email: "user1@gmail.com",
+            password: "CorrectPass1234",
+            role: "staff",
+        });
+    });
+
+    it('should successfully login and reture an HTTP-only cookie', async () =>{
+          
+        const res = await request(app)
+             .post('/api/auth/login')
+             .send({
+                email: "user1@gmail.com",
+                password: "CorrectPass1234",
+             });
+
+             expect(res.status).toBe(200);
+             expect(res.body.success).toBe(true);
+             expect(res.body.data.email).toBe('user1@gmail.com');
+
+             //verifying that an HTTP-Only cookie was attached to the response
+             const cookies = res.headers['set-cookie'];
+             expect(cookies).toBeDefined();
+             expect(cookies?.[0]).toContain('token=');  //optional chaining to prevent typescript warning
+
+    });
+
+
+    it('should reject login if password is incorrect', async ()=>{
+
+        const res = await request(app)
+              .post('/api/auth/login')
+              .send({
+                email: 'user1@gmail.com',
+                password: 'WrongPassword1234',
+              });
+
+          expect(res.status).toBe(401);
+          expect(res.body.success).toBe(false);
+
     });
 });
