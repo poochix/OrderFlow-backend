@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 
 import authRoutes from './routes/authRoutes';
+import customerRoutes from './routes/customerRoutes';
 
 dotenv.config();
 
@@ -25,5 +26,6 @@ app.get('/health', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/customer', customerRoutes)
 
 export default app;

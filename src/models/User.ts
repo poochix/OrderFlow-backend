@@ -8,6 +8,7 @@ export interface IUser  extends Document {
     email: string;
     password: string;
     role: 'admin'| 'manager'| 'staff';
+    isDeleted: boolean;
     createdAt: Date;
     updatedAt: Date;
 
@@ -41,6 +42,12 @@ const userSchema: Schema  = new Schema(
             enum: ['admin', 'manager', 'staff'],
             default: 'staff'
         },
+
+        isDeleted: {
+            type: Boolean,
+            default: false,
+
+        }
 
     },
 {
