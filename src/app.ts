@@ -26,6 +26,6 @@ app.get('/health', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/customer', customerRoutes)
+app.use('/api/customers', customerRoutes)
 
 export default app;

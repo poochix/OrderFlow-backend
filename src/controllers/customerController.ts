@@ -32,7 +32,7 @@ export const createCustomer = async(req:Request, res:Response): Promise<void> =>
                 //Handles know service error (like duplicate emails and phones)
                 res.status(400).json({
                     success: false,
-                    message: 'error.message',
+                    message: error.message,
                 });
                 return;
         }

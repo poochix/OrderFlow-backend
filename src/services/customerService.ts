@@ -1,3 +1,4 @@
+
 import Customer, { ICustomer } from "../models/Customer";
 
 
@@ -18,12 +19,13 @@ export  const createCustomerService = async (inputData: CustomerInputData): Prom
 
     //preventing duplication of customers
     const existingCustomer = await Customer.findOne({
-        $or: [{email, phone}],
+        $or: [{email}, {phone}],
         isDeleted: false
     }) ;
 
     if(existingCustomer){
-        throw new Error('Customer with this email and phone number already exists')
+        throw new Error('Customer with this email and phone number already exists');
+       
     };
 
 
