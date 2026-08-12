@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 
 import authRoutes from './routes/authRoutes';
 import customerRoutes from './routes/customerRoutes';
+import orderRoutes from './routes/orderRoutes';
 
 dotenv.config();
 
@@ -27,5 +28,5 @@ app.get('/health', (req: Request, res: Response) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes)
-
+app.use('/api/orders', orderRoutes)
 export default app;
