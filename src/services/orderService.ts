@@ -40,3 +40,53 @@ export const createOrderService = async (inputData: OrderInputData) : Promise<IO
     return newOrder;
 
 }
+
+
+//==================================================================================================
+
+// GET Orders
+
+interface GetOrdersQuerry {
+    page?:number;
+    limit?: number;
+    status?: string;
+}
+
+export const getOrdersService = async(query: GetOrdersQuerry) =>{
+
+    //setting us pagination defaults
+    const page= query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page-1)* limit;
+
+    //database filter (always hides soft deleted records)
+    const dbQuery: any = {
+        isDeleted: false
+    };
+
+    //if frontend requests a specific status (e.g 'Pending')    
+        if(query.status){
+            dbQuery.status= query.status;
+        };
+            
+        const orders = await Order.find(dbQuery)
+        .populate('Customer', 'name companyName email phone')
+        .populate('assignedEmployee', 'name email')
+        .sort({createdAt: -1})
+        .skip(skip)
+        .limit(limit);
+
+        //gets the total count for front end pagination UI
+        const total = await Order.countDocuments(dbQuery);
+
+        return {
+            orders,
+            pagination:{
+              totalOrders: total,
+              totalPages: Math.ceil(total/limit),
+              currentPage: page,
+              limit,
+            },
+        };
+    
+};

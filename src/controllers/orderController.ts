@@ -1,6 +1,6 @@
 
 import { Request, Response } from "express"
-import { createOrderService } from "../services/orderService"
+import { createOrderService, getOrdersService } from "../services/orderService"
 
 export const createOrder = async(req:Request, res:Response): Promise<void> =>{
     try {
@@ -33,3 +33,30 @@ export const createOrder = async(req:Request, res:Response): Promise<void> =>{
         })
     }
 }
+
+export const getOrders = async(req:Request, res:Response) : Promise<void> =>{
+    
+    try {
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+    const status = req.query.status as string;
+    
+    //fetch the data from our service 
+    const result = await getOrdersService({page, limit, status});
+
+    //send success response
+
+    res.status(201).json({
+        success: true,
+        data: result.orders,
+        pagination: result.pagination,
+    });
+
+} catch (error) {
+     res.status(500).json({
+        success: false,
+        message: 'An unexpected error occured while fetching the orders',
+     });   
+    }
+
+};

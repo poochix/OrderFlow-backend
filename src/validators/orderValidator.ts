@@ -24,6 +24,15 @@ export const createOrderSchema = z.object({
     }),
 }) ;
 
+export const updateOrderStatusSchema = z.object({
+    params: z.object({
+        id: z.string().length(24, {message: 'Invalid Order ID Format'}),
+    }),
+    body: z.object({
+        status: z.enum(['Pending', 'In Progress', 'Completed', 'On Hold', 'Cancelled']),
+    }),
+})
+
 export type createOrderInput = z.infer<typeof createOrderSchema>['body']
 
     
