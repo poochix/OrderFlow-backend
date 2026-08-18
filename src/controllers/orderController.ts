@@ -60,3 +60,21 @@ export const getOrders = async(req:Request, res:Response) : Promise<void> =>{
     }
 
 };
+
+export const updateOrderStatus = async (req:Request, res:Response) : Promise<void> =>{
+    try {
+        
+    } catch (error) {
+        if(error instanceof Error){
+            res.status(404).json({
+                success: false,
+                message: error.message,
+            });
+            return;
+        }
+        res.status(500).json({
+            success: false,
+            message: 'An unexpected error has occurred while updating the order status',
+        });
+    }
+}

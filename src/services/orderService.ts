@@ -1,3 +1,4 @@
+import { getIo } from "../config/socket";
 import Customer from "../models/Customer";
 import Order, { IOrder } from "../models/Order";
 import { getNextSequence } from "../utils/sequenceGenerator";
@@ -90,3 +91,31 @@ export const getOrdersService = async(query: GetOrdersQuerry) =>{
         };
     
 };
+
+
+export const updateOrderStatusService = async(orderId:string, newStatus:string) =>{
+
+    //finding the order to make sure it exists and is not soft deleted
+    const order = await Order.findOne({_id:orderId, isDeleted:false});
+
+    if(!order){
+        throw new Error('Order not found or has been removed from the system');
+    }
+     //updating the status
+    order.status = newStatus as any // casting can be undone if newstatus matches the structure of status
+
+    //updating the order (this will automatically update the timestamps)
+    const updatedOrder = await order.save(); 
+
+    const populatedOrder= await Order.findById(updatedOrder._id)
+    .populate('customer', 'name companyName phone')
+    .populate('assignedEmployee', 'name email')
+    
+    //THE REAL TIME BROADCAST
+    //Emit an event to anyone listening in the 'admin_dashboard' room
+    getIo().to('admin_dashboard').emit('order_status_updated', populatedOrder);
+    
+    //returning the populated order so the frontend has immediate access to the relations   
+    return populatedOrder;
+
+}
