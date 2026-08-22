@@ -9,6 +9,7 @@ import authRoutes from './routes/authRoutes';
 import customerRoutes from './routes/customerRoutes';
 import orderRoutes from './routes/orderRoutes';
 import aiRoutes from './routes/aiRoutes'
+import analyticsRoutes from './routes/analyticsRoutes'
 
 dotenv.config();
 
@@ -31,4 +32,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/ai', aiRoutes)
+app.use('/api/analytics', analyticsRoutes)
+
 export default app;

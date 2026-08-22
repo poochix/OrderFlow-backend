@@ -2,7 +2,10 @@ import OpenAI from "openai";
 import { aiParsedOrderSchema, type AIParsedOrder } from "../validators/aiValidator";
 
 //initializing the client (fetches the process.env.OPENAI_API_KEY automatically)
-const openai = new OpenAI();
+//Provide a dummy fallback key for the Jest test environment
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || 'dummy_test_key_bypasses_initialization_crash',
+});
 
 export const parseOrderFromTextServie = async (rawText: string) : Promise<AIParsedOrder> =>{
     const systemPrompt = `
