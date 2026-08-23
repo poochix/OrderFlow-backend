@@ -1,0 +1,45 @@
+name: OrderFlow CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      # 1. Checkout the repository code from GitHub
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Set up Node.js environment
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      # 3. Install project dependencies securely
+      - name: Install Dependencies
+        run: npm ci
+
+      # 4. Gate 1: TypeScript Type Checking (Ensures zero type errors)
+      - name: Run Type Check
+        run: npx tsc --noEmit
+
+      # 5. Gate 2: Run Jest Test Suite (Ensures backend logic & concurrency are green)
+      - name: Run Backend Tests
+        run: npm run test
+        env:
+          JWT_SECRET: ci_test_secret_key_12345
+
+      # 6. Gate 3: Test Docker Build (Verifies the Dockerfile compiles successfully)
+      - name: Build Docker Image
+        run: docker build -t orderflow-backend:latest .

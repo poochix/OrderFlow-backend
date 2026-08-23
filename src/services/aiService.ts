@@ -7,7 +7,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'dummy_test_key_bypasses_initialization_crash',
 });
 
-export const parseOrderFromTextServie = async (rawText: string) : Promise<AIParsedOrder> =>{
+export const parseOrderFromTextService = async (rawText: string) : Promise<AIParsedOrder> =>{
     const systemPrompt = `
    You are an expert data extraction assistant for an Order Management System.
 
