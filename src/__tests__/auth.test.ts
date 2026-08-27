@@ -118,4 +118,23 @@ describe('POST /api/auth/login', ()=>{
           expect(res.body.success).toBe(false);
 
     });
+
+    it('should return the authenticated user profile when a valid token cookie is provided', async () => {
+        const loginRes = await request(app)
+            .post('/api/auth/login')
+            .send({
+                email: 'user1@gmail.com',
+                password: 'CorrectPass1234',
+            });
+
+        const tokenCookie = loginRes.headers['set-cookie']?.[0] ?? '';
+
+        const meRes = await request(app)
+            .get('/api/auth/me')
+            .set('Cookie', tokenCookie);
+
+        expect(meRes.status).toBe(200);
+        expect(meRes.body.success).toBe(true);
+        expect(meRes.body.data.email).toBe('user1@gmail.com');
+    });
 });

@@ -81,7 +81,7 @@ export const registerUserService = async (inputData: registerInputData): Promise
    };
 
     const token =  jwt.sign(
-        {UserId: user._id, role: user.role},
+        { userId: user._id, role: user.role },
 
         jwtSecret,
 

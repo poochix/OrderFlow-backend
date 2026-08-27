@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { loginUserService, registerUserService } from "../services/authService";
+import User from "../models/User"
 import { success } from "zod";
 
 //REGISTER USER Controller
@@ -90,3 +91,31 @@ export const registerUser = async(req:Request, res:Response): Promise<void> =>{
         }
 
     }
+
+    //============================================================================================
+
+   
+
+
+export const getMe = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.user?._id).select('-password');
+
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: user._id,
+        name: `${user.name}`,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error fetching profile' });
+  }
+};
