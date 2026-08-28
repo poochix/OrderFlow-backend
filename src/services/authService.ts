@@ -82,7 +82,7 @@ export const registerUserService = async (inputData: registerInputData): Promise
         await user.save();
     }
 
-    // when the above condition will be failed this sign a token
+    
    const jwtSecret = process.env.JWT_SECRET;
    if(!jwtSecret){
     throw new Error('No Jwt ket found iin env');
