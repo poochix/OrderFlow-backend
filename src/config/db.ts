@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { seedInitialAdmin } from '../utils/seedAdmin';
  
 const dns = require('dns')
 
@@ -23,6 +24,7 @@ const connectDB = async () : Promise<void> =>{
   
         //log success with connected host
          console.log(`Mongo DB connected : ${conn.connection.host}`);
+         await seedInitialAdmin(); // 👈 Automatically seeds initial admin if DB is empty
 
     } catch (error) {
         // narrow the error type for strict type checking compatibility

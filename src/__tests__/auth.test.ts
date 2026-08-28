@@ -104,6 +104,26 @@ describe('POST /api/auth/login', ()=>{
 
     });
 
+    it('should allow login for a legacy plain-text password that has not been rehashed yet', async () => {
+        await User.create({
+            name: 'Legacy Admin',
+            email: 'legacy-admin@orderflow.com',
+            password: 'LegacyPassword123!',
+            role: 'admin',
+        });
+
+        const res = await request(app)
+            .post('/api/auth/login')
+            .send({
+                email: 'legacy-admin@orderflow.com',
+                password: 'LegacyPassword123!',
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.email).toBe('legacy-admin@orderflow.com');
+    });
+
 
     it('should reject login if password is incorrect', async ()=>{
 

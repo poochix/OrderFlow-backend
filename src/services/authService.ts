@@ -51,8 +51,8 @@ export const registerUserService = async (inputData: registerInputData): Promise
 
   //Defined an interface for the loginUservice
   interface loginInputData {
-    email: 'string';
-    password: 'string';
+    email: string;
+    password: string;
   };
 
   //defined the login logic
@@ -67,11 +67,19 @@ export const registerUserService = async (inputData: registerInputData): Promise
         throw new Error('Invalid email or password');
     }
 
-    // using bcrypt , validating input password with stored password
-    const isPasswordValidated = await bcrypt.compare(password, user.password);
-    if(!isPasswordValidated){
-        throw new Error('Invalid email or Password');
+    // Support both bcrypt-hashed passwords and legacy plain-text rows.
+    // This keeps older seeded users working while migrating them to a hash on successful login.
+    const isHashedPasswordValid = await bcrypt.compare(password, user.password).catch(() => false);
+    const isLegacyPlainTextPassword = user.password === password;
 
+    if(!isHashedPasswordValid && !isLegacyPlainTextPassword){
+        throw new Error('Invalid email or Password');
+    }
+
+    // Rehash legacy text passwords after a successful match so the account is migrated safely.
+    if (isLegacyPlainTextPassword) {
+        user.password = await bcrypt.hash(password, 10);
+        await user.save();
     }
 
     // when the above condition will be failed this sign a token
