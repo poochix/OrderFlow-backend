@@ -18,7 +18,14 @@ const app: Application = express();
 // Global Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
+app.use(cors(
+  {
+    origin: 'http://localhost:5173',   //frontend URL
+    credentials: true,                 // Allows cookies and Headers to pass through
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }
+));
 app.use(helmet());
 app.use(morgan('dev')); // Optional: you can wrap morgan in an if(process.env.NODE_ENV !== 'test') block later
 
