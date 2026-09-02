@@ -71,7 +71,7 @@ export const getOrdersService = async(query: GetOrdersQuerry) =>{
         };
             
         const orders = await Order.find(dbQuery)
-        .populate('Customer', 'name companyName email phone')
+        .populate('customer', 'name companyName email phone')
         .populate('assignedEmployee', 'name email')
         .sort({createdAt: -1})
         .skip(skip)

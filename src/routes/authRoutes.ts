@@ -12,6 +12,9 @@ const router = Router();
 router.post('/register', validate(registerSchema), registerUser );
 router.post("/login", validate(loginSchema), loginUser);
 
+
+
+
 // GET /api/auth/me
 router.get('/me', protect, getMe);
 

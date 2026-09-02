@@ -1,5 +1,5 @@
 import  {Request, Response, NextFunction} from "express";
-import { createCustomerService } from "../services/customerService";
+import { createCustomerService, getCustomerService } from "../services/customerService";
 
 
 export const createCustomer = async(req:Request, res:Response): Promise<void> =>{
@@ -43,3 +43,28 @@ export const createCustomer = async(req:Request, res:Response): Promise<void> =>
         });
     }
 };
+
+// =======================================================
+   // get customer controller logic
+
+   export const getcustomer = async(req: Request, res:Response): Promise<void> =>{
+       try {
+            const companyName = req.query.companyName as string ;
+            const page = parseInt(req.query.page as string, 10) || 1;
+            const limit = parseInt(req.query.limit as string, 10) || 10;
+            
+            const result = await getCustomerService({companyName,page,limit});
+
+            res.status(200).json({
+                success: true,
+                data : result.customers,
+                pagination:  result.pagination,
+            })
+        
+       } catch (error) {
+           res.status(500).json({
+            success: false,
+            message: 'AN unexpected error occured while fetching the customers'
+           })
+       }
+   }
