@@ -7,9 +7,9 @@ interface CustomerInputData {
     companyName: string;
     phone: string;
     email: string
-    gstNumber: string;
-    address: string;
-    notes: string
+    gstNumber?: string;
+    address?: string;
+    notes?: string
     
 }
 

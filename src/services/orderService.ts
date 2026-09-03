@@ -56,8 +56,8 @@ interface GetOrdersQuerry {
 export const getOrdersService = async(query: GetOrdersQuerry) =>{
 
     //setting us pagination defaults
-    const page= query.page || 1;
-    const limit = query.limit || 10;
+    const page= query.page ?? 1;
+    const limit = query.limit ?? 10;
     const skip = (page-1)* limit;
 
     //database filter (always hides soft deleted records)
