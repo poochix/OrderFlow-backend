@@ -1,6 +1,6 @@
 
 import { Request, Response } from "express"
-import { createOrderService, getOrdersService } from "../services/orderService"
+import { createOrderService, getOrdersService, updateOrderStatusService } from "../services/orderService"
 
 export const createOrder = async(req:Request, res:Response): Promise<void> =>{
     try {
@@ -63,6 +63,24 @@ export const getOrders = async(req:Request, res:Response) : Promise<void> =>{
 
 export const updateOrderStatus = async (req:Request, res:Response) : Promise<void> =>{
     try {
+        const {id} = req.params;
+        const {status} = req.body;
+        
+        if(!id || Array.isArray(id)){
+            res.status(400).json({
+                success: false,
+                message: 'Invalid order Id'
+            });
+            return;
+        }
+
+        const updatedStatus = await updateOrderStatusService(id  , status)
+
+        res.status(200).json({
+            success: true,
+            message: 'order status updated successfully',
+            data: updatedStatus,
+        })
         
     } catch (error) {
         if(error instanceof Error){
