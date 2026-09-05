@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors(
   {
-    origin: 'http://localhost:5173',   //frontend URL
+    origin: process.env.CLIENT_URL,   //frontend URL
     credentials: true,                 // Allows cookies and Headers to pass through
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization']
