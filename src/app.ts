@@ -10,6 +10,7 @@ import customerRoutes from './routes/customerRoutes';
 import orderRoutes from './routes/orderRoutes';
 import aiRoutes from './routes/aiRoutes'
 import analyticsRoutes from './routes/analyticsRoutes';
+import auditLogRoutes from './routes/auditLogRoutes'
 
 import userRoutes from './routes/userRoutes';
 
@@ -44,5 +45,6 @@ app.use('/api/ai', aiRoutes)
 app.use('/api/analytics', analyticsRoutes)
 
 app.use('/api/user', userRoutes )
+app.use('/api/audit-logs', auditLogRoutes)
 
 export default app;

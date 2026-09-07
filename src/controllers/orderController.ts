@@ -7,8 +7,16 @@ export const createOrder = async(req:Request, res:Response): Promise<void> =>{
         // grabs the validated date from req body
         const orderData = req.body
 
+        const userId = req.user?._id?.toString()
+        if (!userId) {
+            res.status(401).json({
+                success: false,
+                message: "Unauthorized: userId missing from the session",
+            })
+            return;
+        }
         //passes the order data to the createOrderService layer
-        const newOrder = await createOrderService(orderData);
+        const newOrder = await createOrderService(orderData, userId);
 
         //sends a successfull response
         res.status(201).json({
@@ -18,12 +26,13 @@ export const createOrder = async(req:Request, res:Response): Promise<void> =>{
         });
         
     } catch (error) {
-        if(error instanceof Error){
+        if(error instanceof Error && error.message.startsWith('Cannot create order:')){
             //this catches error if the customer does not exist
             res.status(400).json({
                 success: false,
                 message: error.message,
             })
+            return;
         }
 
         //fallback for unexpected server crashes
@@ -74,7 +83,16 @@ export const updateOrderStatus = async (req:Request, res:Response) : Promise<voi
             return;
         }
 
-        const updatedStatus = await updateOrderStatusService(id  , status)
+      // Extract the native Mongoose _id and explicitly convert it to a string
+        const userId = req.user?._id?.toString();
+        if(!userId){
+            res.status(401).json({
+                success:false,
+                message: 'Unauthorized: userId missing from the session',
+            })
+            return;
+        }
+        const updatedStatus = await updateOrderStatusService(id  , status, userId)
 
         res.status(200).json({
             success: true,
