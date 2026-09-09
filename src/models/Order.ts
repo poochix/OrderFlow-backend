@@ -1,4 +1,4 @@
-import mongoose , {Document, Schema, Types} from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
 import { string } from "zod";
 
 
@@ -6,17 +6,26 @@ import { string } from "zod";
 // this gives us auto complete and strict type checking anywhere
 
 export interface IOrder extends Document {
-     
+
     orderNumber: string;
     customer: Types.ObjectId;
     productName: string;
     description: string;
+
+    width?: string;
+    thickness?: string;
+
+
     quantity: number;
     price: number;
     assignedEmployee?: Types.ObjectId;
     status: 'Pending' | 'In Progress' | 'Completed' | 'On Hold' | 'Cancelled';
     priority: 'Low' | 'Medium' | 'High' | 'Urgent';
     deadline: Date;
+
+    dispatch_Qty?: number[];
+    // pending_Qty?: number;  calculated in logic
+
     isDeleted: boolean;
     deletedAt?: Date;
     createdAt: Date;
@@ -44,6 +53,17 @@ const orderSchema: Schema = new Schema(
             required: true,
             trim: true,
         },
+         
+        thickness: {
+            type: String,
+            trim: true,
+        },
+
+        width: {
+            type: String,
+            trim: true
+        },
+
 
         description: {
             type: String,
@@ -72,7 +92,7 @@ const orderSchema: Schema = new Schema(
 
         // strict status workflow
         status: {
-            type : String,
+            type: String,
             enum: ['Pending', 'In Progress', 'Completed', 'On Hold', 'Cancelled'],
             default: 'Pending',
         },
@@ -89,17 +109,28 @@ const orderSchema: Schema = new Schema(
             required: true,
         },
 
+        dispatch_Qty: {
+            type: [Number],
+            default: 0
+
+        },
+
+        pending_Qty: {
+            type: Number,
+            trim: true
+        },
+
         //soft delete
         isDeleted: {
             type: Boolean,
             default: false,
         },
 
-        deleteAt: {
+        deletedAt: {
             type: Date,
             default: null,
         },
-            
+
     },
     {
         timestamps: true,
@@ -112,7 +143,7 @@ export default mongoose.model<IOrder>('Order', orderSchema);
 
 
 
-            
+
 
 
 

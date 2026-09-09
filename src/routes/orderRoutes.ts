@@ -2,7 +2,7 @@ import { Router } from "express";
 import { protect } from "../middleware/authMiddleware";
 import validate from "../middleware/validate";
 import { createOrderSchema, updateOrderStatusSchema } from "../validators/orderValidator";
-import { createOrder, getOrders, updateOrderStatus } from "../controllers/orderController";
+import { createOrder, dispatch, getOrders, updateOrderStatus } from "../controllers/orderController";
 
 const router = Router()
 //protect: check authentication
@@ -11,6 +11,9 @@ const router = Router()
 
 //create new orders
 router.post('/create', protect, validate(createOrderSchema), createOrder);
+router.post('/:orderId/dispatch', protect, dispatch)
+
+
 //  fetch all orders (with pagination and filters)
 router.get('/getOrders', protect, getOrders);
 

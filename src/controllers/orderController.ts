@@ -1,6 +1,6 @@
 
 import { Request, Response } from "express"
-import { createOrderService, getOrdersService, updateOrderStatusService } from "../services/orderService"
+import { createOrderService, dispatchService, getOrdersService, updateOrderStatusService } from "../services/orderService"
 
 export const createOrder = async(req:Request, res:Response): Promise<void> =>{
     try {
@@ -112,5 +112,39 @@ export const updateOrderStatus = async (req:Request, res:Response) : Promise<voi
             success: false,
             message: 'An unexpected error has occurred while updating the order status',
         });
+    }
+}
+
+export const dispatch = async(req: Request, res:Response): Promise<void> =>{
+    try {
+        
+        const {orderId} = req.params;
+        const {dispatchQty} = req.body ;
+
+          if(!orderId || Array.isArray(orderId)){
+            throw new Error("Order id is undefined")
+          }
+        const result = await dispatchService(orderId, Number(dispatchQty));
+        
+        res.status(200).json({
+            success: true,
+            message: 'Order dispatched successfully',
+            data: result,
+        });
+
+    } catch (error) {
+        if(error instanceof Error){
+            res.status(400).json({
+                success:false,
+                error: error.message
+            })
+
+            return;
+        }
+        res.status(500).json({
+            success: false,
+            message: "failed to dispatch order"
+        })
+
     }
 }

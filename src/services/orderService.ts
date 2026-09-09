@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { getIo } from "../config/socket";
 import AuditLog from "../models/AuditLog";
 import Customer from "../models/Customer";
@@ -8,11 +9,14 @@ import { getNextSequence } from "../utils/sequenceGenerator";
 interface OrderInputData {
     customer: string;
     productName: string;
+    thickness?: string;
+    width?: string;
     description: string;
     quantity: number;
     price: number;
     priority?: 'Low' | 'Medium' | 'High' | 'Urgent';
     deadline: string; // comes as string later parsed into date by mongoose
+   
     assignedEmployee?: string; 
 }
 
@@ -170,3 +174,62 @@ export const getOrdersService = async(query: GetOrdersQuerry) =>{
 //     return populatedOrder;
 
 // }
+
+
+//------------------------------------------------------------------------------------
+// Partial dispatch and pending Qty service
+
+export const dispatchService = async (
+  orderId: string,
+  dispatchQty: number
+) => {
+
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    throw new Error("Invalid Order Id");
+  }
+
+  if (dispatchQty <= 0) {
+    throw new Error("Dispatch Quantity must be greater than 0");
+  }
+
+  const order = await Order.findById(orderId);
+
+  if (!order || order.isDeleted) {
+    throw new Error("Order not Found");
+  }
+
+  const dispatches = Array.isArray(order.dispatch_Qty)
+    ? order.dispatch_Qty
+    : [];
+
+  const totalDispatched = dispatches.reduce(
+    (total, qty) => total + qty,
+    0
+  );
+
+  const pendingQty = order.quantity - totalDispatched;
+
+  if (dispatchQty > pendingQty) {
+    throw new Error(
+      `Only ${pendingQty} is pending for this Order`
+    );
+  }
+
+  order.dispatch_Qty = [...dispatches, dispatchQty];
+
+  const newTotalDispatched = totalDispatched + dispatchQty;
+
+  if (newTotalDispatched === order.quantity) {
+    order.status = "Completed";
+  } else {
+    order.status = "In Progress";
+  }
+
+  await order.save();
+
+  return {
+    order,
+    dispatchedQty: newTotalDispatched,
+    pendingQty: order.quantity - newTotalDispatched,
+  };
+};
