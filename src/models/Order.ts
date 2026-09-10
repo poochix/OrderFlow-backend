@@ -2,8 +2,19 @@ import mongoose, { Document, Schema, Types } from "mongoose";
 import { string } from "zod";
 
 
+interface IDispatchHistory {
+  quantity: number;
+  dispatchedAt: Date;
+  dispatchedBy: mongoose.Types.ObjectId;
+}
+
+
+
 //Defined TypeScript interface
 // this gives us auto complete and strict type checking anywhere
+
+
+
 
 export interface IOrder extends Document {
 
@@ -23,7 +34,7 @@ export interface IOrder extends Document {
     priority: 'Low' | 'Medium' | 'High' | 'Urgent';
     deadline: Date;
 
-    dispatch_Qty?: number[];
+   dispatchHistory: IDispatchHistory[];
     // pending_Qty?: number;  calculated in logic
 
     isDeleted: boolean;
@@ -109,11 +120,25 @@ const orderSchema: Schema = new Schema(
             required: true,
         },
 
-        dispatch_Qty: {
-            type: [Number],
-            default: 0
+       dispatchHistory: [
+  {
+    quantity: {
+      type: Number,
+      required: true,
+    },
 
-        },
+    dispatchedAt: {
+      type: Date,
+      default: Date.now,
+    },
+
+    dispatchedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+],
 
         pending_Qty: {
             type: Number,

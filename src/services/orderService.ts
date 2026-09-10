@@ -89,6 +89,7 @@ export const getOrdersService = async(query: GetOrdersQuerry) =>{
         const orders = await Order.find(dbQuery)
         .populate('customer', 'name companyName email phone')
         .populate('assignedEmployee', 'name email')
+        .populate("dispatchHistory.dispatchedBy", "name email")
         .sort({createdAt: -1})
         .skip(skip)
         .limit(limit);
@@ -181,11 +182,16 @@ export const getOrdersService = async(query: GetOrdersQuerry) =>{
 
 export const dispatchService = async (
   orderId: string,
-  dispatchQty: number
+  dispatchQty: number,
+  userId: string,
 ) => {
 
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new Error("Invalid Order Id");
+  }
+
+  if(!mongoose.Types.ObjectId.isValid(userId)){
+    throw new Error("User not authenticated");
   }
 
   if (dispatchQty <= 0) {
@@ -198,12 +204,10 @@ export const dispatchService = async (
     throw new Error("Order not Found");
   }
 
-  const dispatches = Array.isArray(order.dispatch_Qty)
-    ? order.dispatch_Qty
-    : [];
+  const dispatches = order.dispatchHistory ?? [];
 
   const totalDispatched = dispatches.reduce(
-    (total, qty) => total + qty,
+    (total, dispatch) => total + dispatch.quantity,
     0
   );
 
@@ -215,7 +219,11 @@ export const dispatchService = async (
     );
   }
 
-  order.dispatch_Qty = [...dispatches, dispatchQty];
+  order.dispatchHistory.push({
+     quantity: dispatchQty,
+     dispatchedAt: new Date(),
+     dispatchedBy: new mongoose.Types.ObjectId(userId),
+  })
 
   const newTotalDispatched = totalDispatched + dispatchQty;
 

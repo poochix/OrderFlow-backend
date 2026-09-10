@@ -120,11 +120,16 @@ export const dispatch = async(req: Request, res:Response): Promise<void> =>{
         
         const {orderId} = req.params;
         const {dispatchQty} = req.body ;
+        const userId = req.user?._id?.toString()
 
           if(!orderId || Array.isArray(orderId)){
             throw new Error("Order id is undefined")
           }
-        const result = await dispatchService(orderId, Number(dispatchQty));
+
+          if(!userId ){
+            throw new Error("userId is undefined")
+          }
+        const result = await dispatchService(orderId, Number(dispatchQty), userId);
         
         res.status(200).json({
             success: true,
