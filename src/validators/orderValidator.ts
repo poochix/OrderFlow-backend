@@ -33,6 +33,44 @@ export const updateOrderStatusSchema = z.object({
     }),
 })
 
+
+
+export const updateOrderSchema = z.object({
+    customer: z.string().min(1).optional(),
+
+    productName: z.string().trim().min(1, "Product Name is too short"),
+
+    thickness: z.string().trim(),
+    width: z.string().trim(),
+    description: z.string().min(1, "Description lenght is too short").trim().optional(),
+
+     quantity: z
+    .number()
+    .positive("Quantity must be greater than 0")
+    .optional(),
+
+    price: z
+    .number()
+    .min(0, "Price cannot be negative")
+    .optional(),
+
+     assignedEmployee: z
+    .string()
+    .nullable()
+    .optional(),
+
+     priority: z
+    .enum(["Low", "Medium", "High", "Urgent"])
+    .optional(),
+
+    deadline: z
+    .string()
+    .datetime()
+    .optional(),
+
+
+})
+
 export type createOrderInput = z.infer<typeof createOrderSchema>['body']
 
     
