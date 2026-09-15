@@ -3,9 +3,9 @@ import { string } from "zod";
 
 
 interface IDispatchHistory {
-  quantity: number;
-  dispatchedAt: Date;
-  dispatchedBy: mongoose.Types.ObjectId;
+    quantity: number;
+    dispatchedAt: Date;
+    dispatchedBy: mongoose.Types.ObjectId;
 }
 
 
@@ -34,8 +34,10 @@ export interface IOrder extends Document {
     priority: 'Low' | 'Medium' | 'High' | 'Urgent';
     deadline: Date;
 
-   dispatchHistory: IDispatchHistory[];
+    dispatchHistory: IDispatchHistory[];
     // pending_Qty?: number;  calculated in logic
+
+    dispatchedQty: number;
 
     isDeleted: boolean;
     deletedAt?: Date;
@@ -64,7 +66,7 @@ const orderSchema: Schema = new Schema(
             required: true,
             trim: true,
         },
-         
+
         thickness: {
             type: String,
             trim: true,
@@ -120,30 +122,37 @@ const orderSchema: Schema = new Schema(
             required: true,
         },
 
-       dispatchHistory: [
-  {
-    quantity: {
+        dispatchHistory: [
+            {
+                quantity: {
+                    type: Number,
+                    required: true,
+                },
+
+                dispatchedAt: {
+                    type: Date,
+                    default: Date.now,
+                },
+
+                dispatchedBy: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User",
+                    required: true,
+                },
+            },
+        ],
+
+          dispatchedQty: {
       type: Number,
       required: true,
+      default: 0,
+      min: 0,
     },
 
-    dispatchedAt: {
-      type: Date,
-      default: Date.now,
-    },
-
-    dispatchedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-  },
-],
-
-        pending_Qty: {
-            type: Number,
-            trim: true
-        },
+        // pending_Qty: {
+        //     type: Number,
+        //     trim: true
+        // },
 
         //soft delete
         isDeleted: {

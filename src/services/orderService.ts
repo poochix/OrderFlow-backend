@@ -180,64 +180,194 @@ export const getOrdersService = async(query: GetOrdersQuerry) =>{
 //------------------------------------------------------------------------------------
 // Partial dispatch and pending Qty service
 
+
+
 export const dispatchService = async (
   orderId: string,
   dispatchQty: number,
-  userId: string,
+  userId: string
 ) => {
+  // -----------------------------------------
+  // 1. Validate order ID
+  // -----------------------------------------
 
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new Error("Invalid Order Id");
   }
 
-  if(!mongoose.Types.ObjectId.isValid(userId)){
+  // -----------------------------------------
+  // 2. Validate user ID
+  // -----------------------------------------
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error("User not authenticated");
   }
 
-  if (dispatchQty <= 0) {
-    throw new Error("Dispatch Quantity must be greater than 0");
-  }
+  // -----------------------------------------
+  // 3. Validate dispatch quantity
+  // -----------------------------------------
 
-  const order = await Order.findById(orderId);
-
-  if (!order || order.isDeleted) {
-    throw new Error("Order not Found");
-  }
-
-  const dispatches = order.dispatchHistory ?? [];
-
-  const totalDispatched = dispatches.reduce(
-    (total, dispatch) => total + dispatch.quantity,
-    0
-  );
-
-  const pendingQty = order.quantity - totalDispatched;
-
-  if (dispatchQty > pendingQty) {
+  if (
+    typeof dispatchQty !== "number" ||
+    !Number.isFinite(dispatchQty) ||
+    dispatchQty <= 0
+  ) {
     throw new Error(
-      `Only ${pendingQty} is pending for this Order`
+      "Dispatch Quantity must be a positive number"
     );
   }
 
-  order.dispatchHistory.push({
-     quantity: dispatchQty,
-     dispatchedAt: new Date(),
-     dispatchedBy: new mongoose.Types.ObjectId(userId),
-  })
+  const userObjectId = new mongoose.Types.ObjectId(userId);
 
-  const newTotalDispatched = totalDispatched + dispatchQty;
+  // -----------------------------------------
+  // 4. Start MongoDB transaction
+  // -----------------------------------------
 
-  if (newTotalDispatched === order.quantity) {
-    order.status = "Completed";
-  } else {
-    order.status = "In Progress";
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    // -----------------------------------------
+    // 5. Atomically update the order
+    // -----------------------------------------
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        isDeleted: false,
+
+        // CRITICAL CONCURRENCY CHECK
+        //
+        // dispatchedQty + dispatchQty <= quantity
+        //
+        $expr: {
+          $lte: [
+            {
+              $add: [
+                "$dispatchedQty",
+                dispatchQty,
+              ],
+            },
+            "$quantity",
+          ],
+        },
+      },
+
+      {
+        // Increase aggregate dispatched quantity
+        $inc: {
+          dispatchedQty: dispatchQty,
+        },
+
+        // Add individual dispatch record
+        $push: {
+          dispatchHistory: {
+            quantity: dispatchQty,
+            dispatchedAt: new Date(),
+            dispatchedBy: userObjectId,
+          },
+        },
+      },
+
+      {
+        new: true,
+        session,
+        runValidators: true,
+      }
+    );
+
+    // -----------------------------------------
+    // 6. If atomic update failed
+    // -----------------------------------------
+
+    if (!updatedOrder) {
+      const order = await Order.findOne({
+        _id: orderId,
+        isDeleted: false,
+      }).session(session);
+
+      if (!order) {
+        throw new Error("Order not Found");
+      }
+
+      const pendingQty =
+        order.quantity - order.dispatchedQty;
+
+      throw new Error(
+        `Only ${pendingQty} is pending for this Order`
+      );
+    }
+
+    // -----------------------------------------
+    // 7. Calculate new pending quantity
+    // -----------------------------------------
+
+    const pendingQty =
+      updatedOrder.quantity -
+      updatedOrder.dispatchedQty;
+
+    // -----------------------------------------
+    // 8. Update status
+    // -----------------------------------------
+
+    updatedOrder.status =
+      pendingQty === 0
+        ? "Completed"
+        : "In Progress";
+
+    await updatedOrder.save({
+      session,
+      validateModifiedOnly: true,
+    });
+
+    // -----------------------------------------
+    // 9. Create audit log
+    // -----------------------------------------
+
+    /*
+    await AuditLog.create(
+      [
+        {
+          action: "ORDER_DISPATCHED",
+          performedBy: userObjectId,
+          targetId: updatedOrder._id,
+          details: {
+            orderNumber: updatedOrder.orderNumber,
+            dispatchedQty: dispatchQty,
+            totalDispatched: updatedOrder.dispatchedQty,
+            pendingQty,
+          },
+        },
+      ],
+      { session }
+    );
+    */
+
+    // -----------------------------------------
+    // 10. Commit transaction
+    // -----------------------------------------
+
+    await session.commitTransaction();
+
+    return {
+      order: updatedOrder,
+      dispatchedQty: updatedOrder.dispatchedQty,
+      pendingQty,
+    };
+  } catch (error) {
+    // -----------------------------------------
+    // Rollback everything
+    // -----------------------------------------
+
+    await session.abortTransaction();
+
+    throw error;
+  } finally {
+    // -----------------------------------------
+    // Always close session
+    // -----------------------------------------
+
+    await session.endSession();
   }
-
-  await order.save();
-
-  return {
-    order,
-    dispatchedQty: newTotalDispatched,
-    pendingQty: order.quantity - newTotalDispatched,
-  };
 };
