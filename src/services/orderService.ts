@@ -240,7 +240,11 @@ export const dispatchService = async (
         // CRITICAL CONCURRENCY CHECK
         //
         // dispatchedQty + dispatchQty <= quantity
-        //
+      
+
+        //  * MongoDB checks this condition
+        //  * while performing the update.
+        
         $expr: {
           $lte: [
             {
@@ -311,38 +315,52 @@ export const dispatchService = async (
     // 8. Update status
     // -----------------------------------------
 
-    updatedOrder.status =
-      pendingQty === 0
-        ? "Completed"
-        : "In Progress";
+     const previousStatus = updatedOrder.status;
+
+    if (pendingQty === 0) {
+      updatedOrder.status = "Completed";
+    } else {
+      updatedOrder.status = "In Progress";
+    }
 
     await updatedOrder.save({
       session,
-      validateModifiedOnly: true,
     });
 
     // -----------------------------------------
     // 9. Create audit log
     // -----------------------------------------
 
-    /*
+    
     await AuditLog.create(
       [
         {
-          action: "ORDER_DISPATCHED",
+          entityType: "Order",
+
+          entityId: updatedOrder._id,
+
+          action: "UPDATED",
+
           performedBy: userObjectId,
-          targetId: updatedOrder._id,
-          details: {
-            orderNumber: updatedOrder.orderNumber,
-            dispatchedQty: dispatchQty,
+
+          changes: {
+            type: "DISPATCH",
+
+            dispatchedQuantity: dispatchQty,
+
             totalDispatched: updatedOrder.dispatchedQty,
-            pendingQty,
+
+            pendingQuantity: pendingQty,
+
+            previousStatus,
+
+            newStatus: updatedOrder.status,
           },
         },
       ],
       { session }
     );
-    */
+    
 
     // -----------------------------------------
     // 10. Commit transaction
@@ -371,3 +389,5 @@ export const dispatchService = async (
     await session.endSession();
   }
 };
+
+
