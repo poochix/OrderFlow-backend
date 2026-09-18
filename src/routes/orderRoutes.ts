@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { protect } from "../middleware/authMiddleware";
 import validate from "../middleware/validate";
-import { createOrderSchema, updateOrderStatusSchema } from "../validators/orderValidator";
-import { createOrder, dispatch, getOrders, updateOrderStatus } from "../controllers/orderController";
+import { createOrderSchema, editOrderSchema, updateOrderStatusSchema } from "../validators/orderValidator";
+import { createOrder, dispatch, editOrder, getOrders, updateOrderStatus } from "../controllers/orderController";
 
 const router = Router()
 //protect: check authentication
@@ -21,6 +21,6 @@ router.get('/getOrders', protect, getOrders);
 //Patch /api/orders/:id/status - Update order work flow state
 router.patch('/:id/status', protect, validate(updateOrderStatusSchema), updateOrderStatus);
 
-
+router.patch("/:id/order", protect, validate(editOrderSchema), editOrder)
 
 export default router;

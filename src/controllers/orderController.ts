@@ -1,6 +1,7 @@
 
 import { Request, Response } from "express"
-import { createOrderService, dispatchService, getOrdersService, updateOrderStatusService } from "../services/orderService"
+import { createOrderService, dispatchService, editOrderService, getOrdersService, updateOrderStatusService } from "../services/orderService"
+import { editOrderSchema } from "../validators/orderValidator"
 
 export const createOrder = async(req:Request, res:Response): Promise<void> =>{
     try {
@@ -153,3 +154,47 @@ export const dispatch = async(req: Request, res:Response): Promise<void> =>{
 
     }
 }
+
+
+export const editOrder = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { orderId } = req.params;
+
+    if (!orderId || Array.isArray(orderId)) {
+      res.status(400).json({ success: false, message: 'Invalid order Id' });
+      return;
+    }
+    
+    // Extract the native Mongoose _id attached by the auth middleware
+    const userId = req.user?._id?.toString();
+
+    if (!userId) {
+      res.status(401).json({ success: false, message: 'Unauthorized: User ID missing.' });
+      return;
+    }
+
+    // Validate the incoming payload using Zod before hitting the service layer
+    const validatedData = editOrderSchema.parse(req.body);
+
+    // Pass execution to the transactional service layer
+    const updatedOrder = await editOrderService(orderId, validatedData, userId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Order updated successfully',
+      data: updatedOrder
+    });
+
+  } catch (error: any) {
+    // Handle Zod validation errors cleanly
+    if (error.name === 'ZodError') {
+      res.status(400).json({ success: false, message: 'Validation failed', errors: error.errors });
+      return;
+    }
+
+    res.status(400).json({ 
+      success: false, 
+      message: error.message || 'Failed to update order' 
+    });
+  }
+};
