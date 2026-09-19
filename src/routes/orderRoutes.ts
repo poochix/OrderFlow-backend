@@ -21,6 +21,7 @@ router.get('/getOrders', protect, getOrders);
 //Patch /api/orders/:id/status - Update order work flow state
 router.patch('/:id/status', protect, validate(updateOrderStatusSchema), updateOrderStatus);
 
-router.patch("/:id/order", protect, validate(editOrderSchema), editOrder)
+//patch api/orders/:orderId - updates the edit field 
+router.patch("/:orderId", protect, validate(editOrderSchema), editOrder)
 
 export default router;

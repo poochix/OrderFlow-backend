@@ -488,9 +488,9 @@ export const editOrderService = async (
     // =====================================================
 
     if (
-      updateData.quantity !== undefined &&
-      updateData.quantity < order.dispatchedQty
-    ) {
+      updateData.body.quantity !== undefined &&
+      updateData.body.quantity < order.dispatchedQty
+    ) { 
       throw new Error(
         `Quantity cannot be less than already dispatched quantity (${order.dispatchedQty})`
       );
@@ -516,13 +516,13 @@ export const editOrderService = async (
     // 7. Compare and normalize values
     // =====================================================
 
-    for (const key of Object.keys(updateData)) {
+    for (const key of Object.keys(updateData.body)) {
 
       const typedKey =
-        key as keyof editOrderInput;
+        key as keyof typeof updateData.body;
 
       const incomingValue =
-        updateData[typedKey];
+        updateData.body[typedKey];
 
       if (incomingValue === undefined) {
         continue;

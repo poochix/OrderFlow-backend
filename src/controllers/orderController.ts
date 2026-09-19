@@ -1,9 +1,10 @@
 
 import { Request, Response } from "express"
+import { ZodError } from "zod"
 import { createOrderService, dispatchService, editOrderService, getOrdersService, updateOrderStatusService } from "../services/orderService"
 import { editOrderSchema } from "../validators/orderValidator"
 
-export const createOrder = async(req:Request, res:Response): Promise<void> =>{
+export const createOrder = async (req: Request, res: Response): Promise<void> => {
     try {
         // grabs the validated date from req body
         const orderData = req.body
@@ -25,9 +26,9 @@ export const createOrder = async(req:Request, res:Response): Promise<void> =>{
             message: "Order created successfully",
             data: newOrder,
         });
-        
+
     } catch (error) {
-        if(error instanceof Error && error.message.startsWith('Cannot create order:')){
+        if (error instanceof Error && error.message.startsWith('Cannot create order:')) {
             //this catches error if the customer does not exist
             res.status(400).json({
                 success: false,
@@ -44,39 +45,39 @@ export const createOrder = async(req:Request, res:Response): Promise<void> =>{
     }
 }
 
-export const getOrders = async(req:Request, res:Response) : Promise<void> =>{
-    
+export const getOrders = async (req: Request, res: Response): Promise<void> => {
+
     try {
-    const page = parseInt(req.query.page as string, 10) || 1;
-    const limit = parseInt(req.query.limit as string, 10) || 10;
-    const status = req.query.status as string;
-    
-    //fetch the data from our service 
-    const result = await getOrdersService({page, limit, status});
+        const page = parseInt(req.query.page as string, 10) || 1;
+        const limit = parseInt(req.query.limit as string, 10) || 10;
+        const status = req.query.status as string;
 
-    //send success response
+        //fetch the data from our service 
+        const result = await getOrdersService({ page, limit, status });
 
-    res.status(201).json({
-        success: true,
-        data: result.orders,
-        pagination: result.pagination,
-    });
+        //send success response
 
-} catch (error) {
-     res.status(500).json({
-        success: false,
-        message: 'An unexpected error occured while fetching the orders',
-     });   
+        res.status(201).json({
+            success: true,
+            data: result.orders,
+            pagination: result.pagination,
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'An unexpected error occured while fetching the orders',
+        });
     }
 
 };
 
-export const updateOrderStatus = async (req:Request, res:Response) : Promise<void> =>{
+export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
     try {
-        const {id} = req.params;
-        const {status} = req.body;
-        
-        if(!id || Array.isArray(id)){
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (!id || Array.isArray(id)) {
             res.status(400).json({
                 success: false,
                 message: 'Invalid order Id'
@@ -84,25 +85,25 @@ export const updateOrderStatus = async (req:Request, res:Response) : Promise<voi
             return;
         }
 
-      // Extract the native Mongoose _id and explicitly convert it to a string
+        // Extract the native Mongoose _id and explicitly convert it to a string
         const userId = req.user?._id?.toString();
-        if(!userId){
+        if (!userId) {
             res.status(401).json({
-                success:false,
+                success: false,
                 message: 'Unauthorized: userId missing from the session',
             })
             return;
         }
-        const updatedStatus = await updateOrderStatusService(id  , status, userId)
+        const updatedStatus = await updateOrderStatusService(id, status, userId)
 
         res.status(200).json({
             success: true,
             message: 'order status updated successfully',
             data: updatedStatus,
         })
-        
+
     } catch (error) {
-        if(error instanceof Error){
+        if (error instanceof Error) {
             res.status(404).json({
                 success: false,
                 message: error.message,
@@ -116,22 +117,22 @@ export const updateOrderStatus = async (req:Request, res:Response) : Promise<voi
     }
 }
 
-export const dispatch = async(req: Request, res:Response): Promise<void> =>{
+export const dispatch = async (req: Request, res: Response): Promise<void> => {
     try {
-        
-        const {orderId} = req.params;
-        const {dispatchQty} = req.body ;
+
+        const { orderId } = req.params;
+        const { dispatchQty } = req.body;
         const userId = req.user?._id?.toString()
 
-          if(!orderId || Array.isArray(orderId)){
+        if (!orderId || Array.isArray(orderId)) {
             throw new Error("Order id is undefined")
-          }
+        }
 
-          if(!userId ){
+        if (!userId) {
             throw new Error("userId is undefined")
-          }
+        }
         const result = await dispatchService(orderId, Number(dispatchQty), userId);
-        
+
         res.status(200).json({
             success: true,
             message: 'Order dispatched successfully',
@@ -139,9 +140,9 @@ export const dispatch = async(req: Request, res:Response): Promise<void> =>{
         });
 
     } catch (error) {
-        if(error instanceof Error){
+        if (error instanceof Error) {
             res.status(400).json({
-                success:false,
+                success: false,
                 error: error.message
             })
 
@@ -155,46 +156,77 @@ export const dispatch = async(req: Request, res:Response): Promise<void> =>{
     }
 }
 
+export const editOrder = async (
+    req: Request,
+    res: Response
+): Promise<void> => {
+    try {
+        const { orderId } = req.params;
+        const updatedData = {
+            params: req.params,
+            query: req.query,
+            body: req.body,
+        };
 
-export const editOrder = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { orderId } = req.params;
 
-    if (!orderId || Array.isArray(orderId)) {
-      res.status(400).json({ success: false, message: 'Invalid order Id' });
-      return;
+        if (!orderId || Array.isArray(orderId)) {
+            res.status(400).json({
+                success: false,
+                message: "Invalid order ID",
+            });
+            return;
+        }
+
+        // Auth middleware attaches the authenticated user
+        const userId = req.user?._id?.toString();
+
+        if (!userId) {
+            res.status(401).json({
+                success: false,
+                message: "Unauthorized: User ID missing.",
+            });
+            return;
+        }
+
+
+
+        // Validate request body
+        // const validatedData =
+        //   editOrderSchema.parse(req.body);
+
+        // Business logic belongs in service
+        const updatedOrder =
+            await editOrderService(
+                orderId,
+                updatedData,
+                userId
+            );
+
+        res.status(200).json({
+            success: true,
+            message: "Order updated successfully",
+            data: updatedOrder,
+        });
+
+    } catch (error: unknown) {
+
+        // Zod validation error
+        if (error instanceof ZodError) {
+            res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors: error.issues,
+            });
+            return;
+        }
+
+        // Other service/database errors
+        res.status(400).json({
+            success: false,
+            message:
+                error instanceof Error
+                    ? error.message
+                    : "Failed to update order",
+        });
     }
-    
-    // Extract the native Mongoose _id attached by the auth middleware
-    const userId = req.user?._id?.toString();
-
-    if (!userId) {
-      res.status(401).json({ success: false, message: 'Unauthorized: User ID missing.' });
-      return;
-    }
-
-    // Validate the incoming payload using Zod before hitting the service layer
-    const validatedData = editOrderSchema.parse(req.body);
-
-    // Pass execution to the transactional service layer
-    const updatedOrder = await editOrderService(orderId, validatedData, userId);
-
-    res.status(200).json({
-      success: true,
-      message: 'Order updated successfully',
-      data: updatedOrder
-    });
-
-  } catch (error: any) {
-    // Handle Zod validation errors cleanly
-    if (error.name === 'ZodError') {
-      res.status(400).json({ success: false, message: 'Validation failed', errors: error.errors });
-      return;
-    }
-
-    res.status(400).json({ 
-      success: false, 
-      message: error.message || 'Failed to update order' 
-    });
-  }
 };

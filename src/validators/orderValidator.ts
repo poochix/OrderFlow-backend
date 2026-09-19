@@ -37,48 +37,56 @@ export const updateOrderStatusSchema = z.object({
 
 
 export const editOrderSchema = z.object({
-    customer: z.string().length(24, { message: "Invalid Customer ID format" }).optional(),
 
-    productName: z.string().trim().min(1, "Product Name is too short").optional(),
+    params: z.object({
+        orderId: z.string().length(24),
+    }),
 
-    thickness: z.string().trim().optional(),
-    width: z.string().trim().optional(),
-    description: z.string().trim().min(1, "Description lenght is too short").optional(),
+    query: z.object({}),
 
-    quantity: z
-        .number()
-        .int()
-        .positive("Quantity must be positive Integer")
-        .optional(),
+    body: z.object({
+        customer: z.string().length(24, { message: "Invalid Customer ID format" }).optional(),
 
-    price: z
-        .number()
-        .nonnegative({ message: "Price cannot be negative" })
+        productName: z.string().trim().min(1, "Product Name is too short").optional(),
 
-        .optional(),
+        thickness: z.string().trim().optional(),
+        width: z.string().trim().optional(),
+        description: z.string().trim().min(1, "Description lenght is too short").optional(),
 
-    assignedEmployee: z
-        .string()
-        .length(24, {
-            message: "Invalid Employee ID format",
-        })
-        .nullable()
-        .optional(),
+        quantity: z
+            .number()
+            .int()
+            .positive("Quantity must be positive Integer")
+            .optional(),
 
-    priority: z
-        .enum(["Low", "Medium", "High", "Urgent"])
-        .optional(),
+        price: z
+            .number()
+            .nonnegative({ message: "Price cannot be negative" })
 
-    deadline: z
-        .string()
-        .refine(
-            (date) => !Number.isNaN(Date.parse(date)),
-            {
-                message: "Invalid deadline",
-            }
-        )
-        .optional(),
+            .optional(),
 
+        assignedEmployee: z
+            .string()
+            .length(24, {
+                message: "Invalid Employee ID format",
+            })
+            .nullable()
+            .optional(),
+
+        priority: z
+            .enum(["Low", "Medium", "High", "Urgent"])
+            .optional(),
+
+        deadline: z
+            .string()
+            .refine(
+                (date) => !Number.isNaN(Date.parse(date)),
+                {
+                    message: "Invalid deadline",
+                }
+            )
+            .optional(),
+    })
 }).strict()   // prevent client from injecting unapproved fields
 
 export type createOrderInput = z.infer<typeof createOrderSchema>['body']
