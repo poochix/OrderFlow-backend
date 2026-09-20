@@ -40,7 +40,10 @@ app.get('/health', (req: Request, res: Response) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes)
+
 app.use('/api/orders', orderRoutes)
+
+
 app.use('/api/ai', aiRoutes)
 app.use('/api/analytics', analyticsRoutes)
 

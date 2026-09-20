@@ -1,22 +1,44 @@
-import mongoose , {Document, Schema, Types} from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
 import { string } from "zod";
+
+
+interface IDispatchHistory {
+    quantity: number;
+    dispatchedAt: Date;
+    dispatchedBy: mongoose.Types.ObjectId;
+}
+
 
 
 //Defined TypeScript interface
 // this gives us auto complete and strict type checking anywhere
 
+
+
+
 export interface IOrder extends Document {
-     
+
     orderNumber: string;
     customer: Types.ObjectId;
     productName: string;
     description: string;
+
+    width?: string;
+    thickness?: string;
+
+
     quantity: number;
     price: number;
     assignedEmployee?: Types.ObjectId;
     status: 'Pending' | 'In Progress' | 'Completed' | 'On Hold' | 'Cancelled';
     priority: 'Low' | 'Medium' | 'High' | 'Urgent';
     deadline: Date;
+
+    dispatchHistory: IDispatchHistory[];
+    // pending_Qty?: number;  calculated in logic
+
+    dispatchedQty: number;
+
     isDeleted: boolean;
     deletedAt?: Date;
     createdAt: Date;
@@ -45,6 +67,17 @@ const orderSchema: Schema = new Schema(
             trim: true,
         },
 
+        thickness: {
+            type: String,
+            trim: true,
+        },
+
+        width: {
+            type: String,
+            trim: true
+        },
+
+
         description: {
             type: String,
             required: true,
@@ -72,7 +105,7 @@ const orderSchema: Schema = new Schema(
 
         // strict status workflow
         status: {
-            type : String,
+            type: String,
             enum: ['Pending', 'In Progress', 'Completed', 'On Hold', 'Cancelled'],
             default: 'Pending',
         },
@@ -89,17 +122,49 @@ const orderSchema: Schema = new Schema(
             required: true,
         },
 
+        dispatchHistory: [
+            {
+                quantity: {
+                    type: Number,
+                    required: true,
+                },
+
+                dispatchedAt: {
+                    type: Date,
+                    default: Date.now,
+                },
+
+                dispatchedBy: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User",
+                    required: true,
+                },
+            },
+        ],
+
+          dispatchedQty: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+    },
+
+        // pending_Qty: {
+        //     type: Number,
+        //     trim: true
+        // },
+
         //soft delete
         isDeleted: {
             type: Boolean,
             default: false,
         },
 
-        deleteAt: {
+        deletedAt: {
             type: Date,
             default: null,
         },
-            
+
     },
     {
         timestamps: true,
@@ -112,7 +177,7 @@ export default mongoose.model<IOrder>('Order', orderSchema);
 
 
 
-            
+
 
 
 

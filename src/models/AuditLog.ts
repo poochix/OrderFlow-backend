@@ -46,7 +46,7 @@ const AuditLogSchema = new Schema(
 //Indexes for rapid timeline retrieval and user accountability lookups
 
 AuditLogSchema.index({entityId: 1});
-AuditLogSchema.index({perfomedBy: 1});
+AuditLogSchema.index({performedBy: 1});
 AuditLogSchema.index({createdAt: -1});
 
 export default mongoose.model<IAuditLog>('AuditLog', AuditLogSchema);
