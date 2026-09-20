@@ -91,7 +91,7 @@ export const editOrderSchema = z.object({
 
 export type createOrderInput = z.infer<typeof createOrderSchema>['body']
 export type updateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>
-export type editOrderInput = z.infer<typeof editOrderSchema>
+export type editOrderInput = z.infer<typeof editOrderSchema>['body']
 
 
 

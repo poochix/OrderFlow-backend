@@ -162,12 +162,6 @@ export const editOrder = async (
 ): Promise<void> => {
     try {
         const { orderId } = req.params;
-        const updatedData = {
-            params: req.params,
-            query: req.query,
-            body: req.body,
-        };
-
 
         if (!orderId || Array.isArray(orderId)) {
             res.status(400).json({
@@ -176,6 +170,17 @@ export const editOrder = async (
             });
             return;
         }
+
+        //defined updateData with type otherwise three three wont comply with the required structure
+        // const updatedData: {
+        //     params: { orderId: string };
+        //     query: Record<string, never>;
+        //     body: typeof req.body;
+        // } = {
+        //     params: { orderId },
+        //     query: req.query as Record<string, never>,
+        //     body: req.body,
+        // };
 
         // Auth middleware attaches the authenticated user
         const userId = req.user?._id?.toString();
@@ -198,7 +203,7 @@ export const editOrder = async (
         const updatedOrder =
             await editOrderService(
                 orderId,
-                updatedData,
+                req.body,
                 userId
             );
 
