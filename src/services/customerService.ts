@@ -42,6 +42,7 @@ export  const createCustomerService = async (inputData: CustomerInputData): Prom
          companyName?: string;
          page?: number;
          limit?: number;
+         search?: string;
          
         
   }
@@ -58,8 +59,12 @@ export  const createCustomerService = async (inputData: CustomerInputData): Prom
    const dbQuery: Record<string, unknown> = {
         isDeleted: false,
    }
-         if(query.companyName){
-            dbQuery.companyName = query.companyName
+         //Search Company name
+         if(query.companyName?.trim()){
+            dbQuery.companyName = {
+               $regex: `^${query.companyName.trim()}`,             //query.companyName.trim(),
+              $options: "i",
+            }
          }
 
    const customers = await Customer.find(dbQuery)
