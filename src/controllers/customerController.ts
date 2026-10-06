@@ -52,8 +52,10 @@ export const createCustomer = async(req:Request, res:Response): Promise<void> =>
             const companyName = req.query.companyName as string ;
             const page = parseInt(req.query.page as string, 10) || 1;
             const limit = parseInt(req.query.limit as string, 10) || 10;
+
+            const search = typeof req.query.search === "string" ? req.query.search.trim() : ""
             
-            const result = await getCustomerService({companyName,page,limit});
+            const result = await getCustomerService({companyName,page,limit,search});
 
             res.status(200).json({
                 success: true,
