@@ -9,7 +9,7 @@ export const parseOrderTextItem = z.object({
 
 //validates the JSON string returned by the LLM
 export const aiParsedOrderSchema = z.object({
-    customerName: z.string().optional, //We might need to fuzzy search this on the frontend
+    customer: z.string().optional(), //We might need to fuzzy search this on the frontend
     productName: z.string(),
     quantity: z.number().int().positive(),
     price: z.number().positive().optional(),
