@@ -1,70 +1,90 @@
-import OpenAI from "openai";
-import { aiParsedOrderSchema, type AIParsedOrder } from "../validators/aiValidator";
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from 'zod';
 
-//initializing the client (fetches the process.env.OPENAI_API_KEY automatically)
-//Provide a dummy fallback key for the Jest test environment
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'dummy_test_key_bypasses_initialization_crash',
-});
+// Ensure you import your actual Zod schema from your validators file
+import { aiParsedOrderSchema } from '../validators/aiValidator';
 
-export const parseOrderFromTextService = async (rawText: string) : Promise<AIParsedOrder> =>{
-    const systemPrompt = `
-   You are an expert data extraction assistant for an Order Management System.
+// Initialize the Gemini SDK
+const getGeminiClient = (): GoogleGenerativeAI => {
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    Extract the order details from the user's unstructured text.
-
-    You MUST return ONLY a valid JSON object matching this schema:
-
-    {
-      "customerName": "string or null",
-      "productName": "string",
-      "quantity": 0,
-      "price": 0,
-      "deadline": "ISO date string or null",
-      "priority": "Low, Medium, High, or Urgent",
-      "notes": "string"
+    if (!apiKey) {
+        throw new Error(
+            "GEMINI_API_KEY is missing from environment variables"
+        );
     }
 
-    Rules:
-    - quantity must be a number.
-    - Convert written numbers into digits. For example, "fifty" becomes 50.
-    - price must be a number or null.
-    - deadline must be an ISO date string or null.
-    - priority must be exactly Low, Medium, High, or Urgent.
-    - customerName should be null if it cannot be identified.
-    - Do not include markdown, greetings, explanations, or any text outside the JSON
-    `;
-
-    //calling the LLM
-    const  response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-            {role:"system", content:systemPrompt},
-            {role: "user", content:rawText},
-        ],
-        temperature: 0.1, //low temp for highly deterministic, robotic output
-        response_format: {type: 'json_object'}, // forces the model to return valid json object
-    });
-
-    const aiContent = response.choices[0]?.message.content;
-
-    if(!aiContent){
-        throw new Error('AI failed to generate a response');
-    }
-     
-    try {
-        //parsing the raw string in to json object
-        const parsedData = JSON.parse(aiContent);
-
-      //running ai output through strict zod validation schema
-      // if ai hallucinates bad data types , then zod will throw an error
-      const validatedData = aiParsedOrderSchema.parse(parsedData);
-
-      return validatedData;
-    } catch (error) {
-        console.log('AI output validation failed', error);
-        throw new Error('The AI generated an invalid data structure. Please try rephrasing the text.');
-        
-    }
+    return new GoogleGenerativeAI(apiKey);
 };
 
+export const parseOrderTextService = async (rawText: string) => {
+    // 1. Guard clause for missing API key
+    if (!process.env.GEMINI_API_KEY) {
+        throw new Error('GEMINI_API_KEY is not defined in environment variables');
+    }
+
+    // 2. We use gemini-1.5-flash because it is extremely fast and heavily prioritized on the free tier
+    const model = getGeminiClient().getGenerativeModel({
+        model: 'gemini-3.5-flash-lite',
+        generationConfig: {
+            // This natively forces the AI to only return a valid JSON string
+            responseMimeType: 'application/json',
+        }
+    });
+
+    // 3. The Strict Prompting Strategy
+    const currentDate = new Date().toISOString().split("T")[0];
+    const currentYear = new Date().getFullYear();
+    const prompt = `
+    You are an enterprise data extraction assistant for a manufacturing order system. 
+    Extract the order details from the following raw text and format it into a strictly typed JSON object.
+    if some data is not present in the raw text, keep it default value.
+    Current date: ${currentDate}
+    Current year: ${currentYear}
+
+    DATE RULES: 
+    1. Extract deadlines from the customer's message.
+    2. If the customer provides a day and month but no year,
+    use the next upcoming occurrence of that date.
+    3. Never assume a year from old examples or training data.
+    4. Return deadlines in YYYY-MM-DD format.
+    5. If a deadline is ambiguous, use null rather than inventing a date.
+    6. Do not change a deadline that explicitly includes a year.
+    
+    Required JSON Keys and Types:
+    - "companyName" (string, extract the client or company name if mentioned, otherwise null)
+    - "productName" (string, the name of the product, e.g., "Steel Pipes", otherwise null)
+    - "thickness" (string, include units if mentioned, e.g., "2mm", otherwise null)
+    - "width" (string, include units if mentioned, e.g., "50cm", otherwise null)
+    - "quantity" (number, default to 1 if a product is mentioned but no quantity is specified)
+    - "price" (number, extract the unit price if mentioned, otherwise 0)
+    - "deadline" (ISO date string, if a relative date like "next friday" or specific date is mentioned, calculate/format it, otherwise null)
+    - "priority" (string: strictly choose between "Low", "Medium", "High", or "Urgent" based on tone, default to "Medium")
+    - "notes" (string, summarizing any extra details, special requests, or raw text that doesn't fit elsewhere, otherwise "")
+
+    Raw Text: "${rawText}"
+    `;
+
+    try {
+        // 4. Call the Gemini API
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+
+        // 5. Parse the string into a JavaScript Object
+        const rawJsonData = JSON.parse(responseText);
+
+        // 6. Pass the data through Zod to guarantee it matches the Mongoose schema perfectly
+        const validatedData = aiParsedOrderSchema.parse(rawJsonData);
+
+        // return validatedData;
+
+        return validatedData; // (Replace this with the validatedData once your Zod schema is imported)
+
+    } catch (error: any) {
+        // Catch parsing errors or Zod validation failures
+        if (error.name === 'ZodError') {
+            throw new Error('AI extracted data did not match the required database schema');
+        }
+        throw new Error(`AI Processing Failed: ${error.message}`);
+    }
+};

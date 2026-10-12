@@ -1,11 +1,11 @@
 import {Request, Response} from 'express';
-import { parseOrderFromTextService } from '../services/aiService';
+import { parseOrderTextService } from '../services/aiService';
 
 
 export const parseOrderText = async(req:Request, res:Response): Promise<void> =>{
     try {
         const {text } = req.body;
-        const parsedOrder = await parseOrderFromTextService(text);
+        const parsedOrder = await parseOrderTextService(text);
             res.status(200).json({
                 success: true,
                 message: 'Text successfully parsed into structured order data',
