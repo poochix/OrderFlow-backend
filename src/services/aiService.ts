@@ -38,6 +38,7 @@ export const parseOrderTextService = async (rawText: string) => {
     const prompt = `
     You are an enterprise data extraction assistant for a manufacturing order system. 
     Extract the order details from the following raw text and format it into a strictly typed JSON object.
+    if some data is not present in the raw text, keep it default value.
     Current date: ${currentDate}
     Current year: ${currentYear}
 
