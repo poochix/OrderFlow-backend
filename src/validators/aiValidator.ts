@@ -10,13 +10,13 @@ export const parseOrderTextItem = z.object({
 //validates the JSON string returned by the LLM
 export const aiParsedOrderSchema = z.object({
     companyName: z.string().optional(), //We might need to fuzzy search this on the frontend
-    productName: z.string(),
-    thickness: z.string(),
-    width: z.string(),
+    productName: z.string().optional(),
+    thickness: z.string().optional(),
+    width: z.string().optional(),
     quantity: z.number().int().positive(),
     price: z.number().positive().optional(),
     deadline: z.string().optional(),
-    priority: z.enum(['Low', 'Medium', 'High', 'Urgent' ]).default('Medium'),
+    priority: z.enum(['Low', 'Medium', 'High', 'Urgent' ]).default('Medium').optional(),
     notes: z.string().optional(),
 })
 

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 // Ensure you import your actual Zod schema from your validators file
 import { aiParsedOrderSchema } from '../validators/aiValidator';
+import Customer from '../models/Customer';
 
 // Initialize the Gemini SDK
 const getGeminiClient = (): GoogleGenerativeAI => {
@@ -38,7 +39,9 @@ export const parseOrderTextService = async (rawText: string) => {
     const prompt = `
     You are an enterprise data extraction assistant for a manufacturing order system. 
     Extract the order details from the following raw text and format it into a strictly typed JSON object.
-    if some data is not present in the raw text, keep it default value.
+    If information is missing from the raw text, return null for that field.
+    Do not invent missing information.
+    Missing fields must not prevent extraction of other available fields.
     Current date: ${currentDate}
     Current year: ${currentYear}
 
@@ -56,7 +59,7 @@ export const parseOrderTextService = async (rawText: string) => {
     - "productName" (string, the name of the product, e.g., "Steel Pipes", otherwise null)
     - "thickness" (string, include units if mentioned, e.g., "2mm", otherwise null)
     - "width" (string, include units if mentioned, e.g., "50cm", otherwise null)
-    - "quantity" (number, default to 1 if a product is mentioned but no quantity is specified)
+    - "quantity" (number, default to 0 if a product is mentioned but no quantity is specified)
     - "price" (number, extract the unit price if mentioned, otherwise 0)
     - "deadline" (ISO date string, if a relative date like "next friday" or specific date is mentioned, calculate/format it, otherwise null)
     - "priority" (string: strictly choose between "Low", "Medium", "High", or "Urgent" based on tone, default to "Medium")
@@ -74,7 +77,10 @@ export const parseOrderTextService = async (rawText: string) => {
         const rawJsonData = JSON.parse(responseText);
 
         // 6. Pass the data through Zod to guarantee it matches the Mongoose schema perfectly
+
         const validatedData = aiParsedOrderSchema.parse(rawJsonData);
+
+
 
         // return validatedData;
 
