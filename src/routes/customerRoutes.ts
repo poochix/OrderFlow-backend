@@ -5,7 +5,7 @@ import { createCustomerSchema } from "../validators/customerValidator";
 import { createCustomer, getcustomer } from "../controllers/customerController";
 
 const router = Router();
-// order of middleware 
+// middle ware's order
 //protect : verify customer is authenticated using JWT
 //valdiate: validate zod scehma for customer
 
